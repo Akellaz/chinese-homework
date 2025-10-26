@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Китайский с удовольствием 🇨🇳</title>
+    <link rel="stylesheet" href="/static/chinese/css/chinese.css">
+</head>
+<body>
+    <div class="chinese-wrapper">
+        <header class="chinese-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <span class="chinese-symbol">中</span>
+                    <h1>Китайский с удовольствием</h1>
+                </div>
+                <p class="subtitle">Домашние задания для учеников</p>
+            </div>
+        </header>
+
+        <main class="chinese-main">
+            <div class="welcome-section">
+                <h2>Выберите тему:</h2>
+            </div>
+
+        <div class="topics-grid">
+  {% for id, theme in themes.items() %}
+  <div class="topic-card">
+    <div class="topic-icon">📄</div>
+    <h3>{{ theme.name }}</h3>
+    <a href="/chinese/{{ id }}" class="topic-link">Открыть →</a>
+  </div>
+  {% endfor %}
+</div>
+        </main>
+
+        <footer class="chinese-footer">
+            <p>© 2025 | Для учителя Ольги</p>
+        </footer>
+    </div>
+</body>
+</html>
