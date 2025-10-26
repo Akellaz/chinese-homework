@@ -101,7 +101,8 @@ def create_pdf(title, theory, exercises, answers=None):
             pdf.cell(0, 8, f"{i}. {ans}", new_x="LMARGIN", new_y="NEXT")
     
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-    filepath = os.path.join('temp', filename)
+    import tempfile
+    filepath = os.path.join(tempfile.gettempdir(), filename)
     os.makedirs('temp', exist_ok=True)
     pdf.output(filepath)
     return filepath
