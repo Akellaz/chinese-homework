@@ -111,17 +111,17 @@ def create_pdf(title, theory, exercises, answers=None):
 
 # ==================== МАРШРУТЫ ====================
 
-@chinese_bp.route('/chinese')
+@chinese_bp.route('/')
 def index():
     return render_template('chinese/index.html', themes=THEMES)
 
-@chinese_bp.route('/chinese/<theme_id>')
+@chinese_bp.route('/<theme_id>')
 def theme_page(theme_id):
     if theme_id not in THEMES:
         return "Тема не найдена", 404
     return render_template('chinese/module.html', theme_id=theme_id, theme=THEMES[theme_id])
 
-@chinese_bp.route('/chinese/generate_pdf/<theme_id>', methods=['POST'])
+@chinese_bp.route('/generate_pdf/<theme_id>', methods=['POST'])
 def generate_pdf_route(theme_id):
     if theme_id not in THEMES:
         return "Тема не найдена", 404
