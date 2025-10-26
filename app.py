@@ -7,7 +7,7 @@ def create_app():
     app.config['SECRET_KEY'] = 'chinese-homework-secret'
     
     from routes.chinese import chinese_bp
-    app.register_blueprint(chinese_bp)
+    app.register_blueprint(chinese_bp, url_prefix='/chinese')
     
     # Корневой маршрут — перенаправление на /chinese
     @app.route('/')
