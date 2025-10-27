@@ -159,27 +159,32 @@ def create_pdf(title, theory, exercises, answers=None):
     pdf.cell(0, 10, title, new_x="LMARGIN", new_y="NEXT", align='C')
     pdf.ln(8)
     
-    # Теория + словарик (если есть)
+    # Теория
     pdf.set_font("NotoSansTC", size=12)
     for line in theory:
         pdf.multi_cell(w=0, h=7, text=line)
     pdf.ln(5)
     
-    # Упражнения
+    # Упражнения — с multi_cell для переноса строк
+    pdf.set_font("NotoSansTC", size=12)
     for i, ex in enumerate(exercises, 1):
+        # Добавляем номер и текст задания
+        pdf.set_font("NotoSansTC", size=12)
         pdf.multi_cell(w=0, h=8, text=f"{i}. {ex}")
-        pdf.ln(2)
+        pdf.ln(2)  # небольшой отступ между заданиями
 
-    # Ответы (если понадобятся позже)
+    # Ответы (опционально)
     if answers:
         pdf.add_page()
         pdf.set_font("NotoSansTC", size=14)
         pdf.cell(0, 10, "Ответы (для учителя)", new_x="LMARGIN", new_y="NEXT", align='C')
         pdf.ln(5)
+        pdf.set_font("NotoSansTC", size=12)
         for i, ans in enumerate(answers, 1):
             pdf.multi_cell(w=0, h=8, text=f"{i}. {ans}")
             pdf.ln(2)
 
+    # Генерация имени файла и сохранение
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     import tempfile
     filepath = os.path.join(tempfile.gettempdir(), filename)
@@ -210,18 +215,9 @@ def generate_pdf_route(theme_id):
     theme = THEMES[theme_id]
     exercises = generate_exercises(theme, count)
 
-    # === ДОБАВЛЯЕМ СЛОВАРИК В ТЕОРИЮ, ЕСЛИ ЭТО VOCABULARY ===
-    full_theory = theme["theory"].copy()  # копируем, чтобы не менять оригинал
-
-    if theme["type"] == "vocabulary":
-        full_theory.append("")  # пустая строка как разделитель
-        full_theory.append("Словарик:")
-        for chinese, russian in theme["data"].items():
-            full_theory.append(f"{chinese} — {russian}")
-
     pdf_path = create_pdf(
         title=theme["name"],
-        theory=full_theory,
+        theory=theme["theory"],
         exercises=exercises,
         answers=None
     )
