@@ -79,26 +79,36 @@ def generate_exercises(theme_config, count=15):
         return exercises
 
 
-        # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ ТЕМЫ "Дата" ===
+         # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ ТЕМЫ "Дата" ===
     if theme_config.get("name") == "Дата":
-        # Сегодняшняя дата для примеров
         today = datetime.now()
-        today_str = f"{today.year}年{today.month}月{today.day}日"
-        today_ru = f"{today.day} {['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][today.month - 1]} {today.year} года"
+        months_ru = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+        today_ru = f"{today.day} {months_ru[today.month - 1]} {today.year} года"
 
-        # Праздники и примеры
-        holiday_examples = [
+        # Расширенный список событий
+        events = [
             ("Новый год", "1月1日", "1 января"),
             ("Мой день рождения", "5月3日", "3 мая"),
             ("День учителя в Китае", "9月10日", "10 сентября"),
-            ("Национальный день КНР", "10月1日", "1 октября")
+            ("Национальный день КНР", "10月1日", "1 октября"),
+            ("Международный женский день", "3月8日", "8 марта"),
+            ("День защиты детей", "6月1日", "1 июня"),
+        ]
+
+        # Возможные ошибки в порядке
+        wrong_orders = [
+            "{day}年{month}月{year}日",
+            "{month}日{day}月{year}年",
+            "{year}月{month}日{day}年",
+            "{day}月{year}年{month}日"
         ]
 
         used = set()
         while len(exercises) < count - 1:
             task_type = random.choices(
-                ["today_fill", "birthday_fill", "translate_date", "choose_format", "correct_mistake", "holiday"],
-                weights=[2, 2, 2, 1, 1, 2]
+                ["today_fill", "birthday_fill", "translate_date", "write_date", "correct_mistake", "event_date", "ask_question"],
+                weights=[2, 2, 2, 2, 1, 2, 1]  # убрали "choose_format", добавили новые типы
             )[0]
 
             try:
@@ -109,23 +119,32 @@ def generate_exercises(theme_config, count=15):
                     ex = "Мой день рождения — 12 апреля. Напиши это по-китайски:\n我的生日是______月______日。"
 
                 elif task_type == "translate_date":
-                    chinese_date = random.choice(["2025年10月27日", "1999年5月3日", "2004年12月31日"])
-                    # Простой перевод на русский (без склонения)
-                    ex = f"Переведи: {chinese_date} → ______"
+                    sample_dates = ["2025年10月27日", "1999年5月3日", "2004年12月31日", "2030年7月15日"]
+                    ch_date = random.choice(sample_dates)
+                    ex = f"Переведи на русский: {ch_date} → ______"
 
-                elif task_type == "choose_format":
-                    correct = "10月27号"
-                    wrong = random.choice(["10年27月", "10日27月", "27年10月"])
-                    opts = [correct, wrong]
-                    random.shuffle(opts)
-                    ex = f"Как правильно написать «27 октября»?\n  □ {opts[0]}\n  □ {opts[1]}"
+                elif task_type == "write_date":
+                    # Дано по-русски — написать по-китайски
+                    ru_examples = [
+                        ("15 марта 2010 года", "2010年3月15日"),
+                        ("30 декабря 1985 года", "1985年12月30日"),
+                        ("1 января 2000 года", "2000年1月1日")
+                    ]
+                    ru, _ = random.choice(ru_examples)
+                    ex = f"Напиши по-китайски: {ru} → ______"
 
                 elif task_type == "correct_mistake":
-                    ex = "Исправь ошибку: 今天是27年10月2025日。 Правильно: ________________________"
+                    year, month, day = 2025, 10, 27
+                    wrong_fmt = random.choice(wrong_orders)
+                    wrong_str = wrong_fmt.format(year=year, month=month, day=day)
+                    ex = f"Исправь ошибку: 今天是{wrong_str}。 Правильно: ________________________"
 
-                elif task_type == "holiday":
-                    name, ch, ru = random.choice(holiday_examples)
-                    ex = f"{name} — {ru}. Напиши дату по-китайски: ______"
+                elif task_type == "event_date":
+                    name, ch, ru = random.choice(events)
+                    ex = f"{name} отмечают {ru}. Напиши дату по-китайски: ______"
+
+                elif task_type == "ask_question":
+                    ex = "Как спросить «Какое сегодня число?» по-китайски? Напиши: ______"
 
                 if ex and len(ex) < 250 and ex not in used:
                     used.add(ex)
@@ -133,7 +152,6 @@ def generate_exercises(theme_config, count=15):
             except:
                 continue
 
-        # Творческое задание
         exercises.append(
             "Напиши по-китайски:\n"
             "1. Сегодняшнюю дату.\n"
