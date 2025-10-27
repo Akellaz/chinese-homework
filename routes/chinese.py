@@ -80,6 +80,7 @@ def generate_exercises(theme_config, count=15):
 
 
          # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ ТЕМЫ "Дата" ===
+    # Специальная логика для "Дата"
     if theme_config.get("name") == "Дата":
         today = datetime.now()
         months_ru = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -158,9 +159,7 @@ def generate_exercises(theme_config, count=15):
             "2. Дату своего дня рождения."
         )
         return exercises
-
-
-    # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ HSK 3 ===
+    # Специальная логика для "HSK3"
     if theme_config.get("name") == "Повседневные ситуации (HSK 3)":
         pairs = [(k, v) for k, v in theme_config["data"].items() if k and v]
         used = set()
