@@ -13,7 +13,8 @@ chinese_bp = Blueprint('chinese', __name__, template_folder='../templates/chines
 # ==================== УНИВЕРСАЛЬНЫЙ ГЕНЕРАТОР УПРАЖНЕНИЙ ====================
 
 def generate_exercises(theme_config, count=15):
-    ANSWER_LINE = "________________________"
+    # Короткое, но удобное поле для письма — 12 подчёркиваний
+    ANSWER_LINE = "____________"
 
     theme_type = theme_config["type"]
     data = theme_config["data"]
@@ -21,7 +22,11 @@ def generate_exercises(theme_config, count=15):
 
     # Специальная обработка темы "Семья"
     if theme_config.get("name") == "Семья":
-        family_words = list(data.items())
+        family_words = [(k, v) for k, v in data.items() if k and v]
+        if not family_words:
+            # fallback, если данные пустые
+            return [f"{i}. Задание недоступно" for i in range(1, count + 1)]
+
         senior_junior = {
             "哥哥": "старший брат", "姐姐": "старшая сестра",
             "弟弟": "младший брат", "妹妹": "младшая сестра"
@@ -37,94 +42,96 @@ def generate_exercises(theme_config, count=15):
                 weights=[4, 3, 2, 1]
             )[0]
 
-            if task_type == "translate":
-                chinese, russian = random.choice(family_words)
-                if not chinese.strip() or not russian.strip():
-                    continue
-                if random.choice([True, False]):
-                    ex = f"Переведи на русский: {chinese} → {ANSWER_LINE}"
-                else:
-                    ex = f"Напиши по-китайски: {russian} → {ANSWER_LINE}"
+            try:
+                if task_type == "translate":
+                    chinese, russian = random.choice(family_words)
+                    if random.choice([True, False]):
+                        ex = f"Переведи на русский: {chinese} → {ANSWER_LINE}"
+                    else:
+                        ex = f"Напиши по-китайски: {russian} → {ANSWER_LINE}"
 
-            elif task_type == "context_fill":
-                child_word = random.choice(list(senior_junior.keys()))
-                meaning = senior_junior[child_word]
-                ex = (
-                    f"У меня есть {meaning}. "
-                    f"Значит, он/она {'старше' if child_word in senior_terms else 'младше'} меня. "
-                    f"Напиши это по-китайски: {ANSWER_LINE}"
-                )
+                elif task_type == "context_fill":
+                    child_word = random.choice(list(senior_junior.keys()))
+                    meaning = senior_junior[child_word]
+                    ex = (
+                        f"У меня есть {meaning}. "
+                        f"Значит, он/она {'старше' if child_word in senior_terms else 'младше'} меня. "
+                        f"Напиши это по-китайски: {ANSWER_LINE}"
+                    )
 
-            elif task_type == "choose_senior_junior":
-                name = random.choice(["Ли Миня", "Ани", "Тани", "Вани"])
-                sibling_type = random.choice(["брат", "сестра"])
-                is_senior = random.choice([True, False])
+                elif task_type == "choose_senior_junior":
+                    name = random.choice(["Ли Миня", "Ани", "Тани", "Вани"])
+                    sibling_type = random.choice(["брат", "сестра"])
+                    is_senior = random.choice([True, False])
 
-                if sibling_type == "брат":
-                    correct = "哥哥" if is_senior else "弟弟"
-                    wrong = "弟弟" if is_senior else "哥哥"
-                    adj = "старший" if is_senior else "младший"
-                else:
-                    correct = "姐姐" if is_senior else "妹妹"
-                    wrong = "妹妹" if is_senior else "姐姐"
-                    adj = "старшая" if is_senior else "младшая"
+                    if sibling_type == "брат":
+                        correct = "哥哥" if is_senior else "弟弟"
+                        wrong = "弟弟" if is_senior else "哥哥"
+                        adj = "старший" if is_senior else "младший"
+                    else:
+                        correct = "姐姐" if is_senior else "妹妹"
+                        wrong = "妹妹" if is_senior else "姐姐"
+                        adj = "старшая" if is_senior else "младшая"
 
-                options = [correct, wrong]
-                random.shuffle(options)
-                ex = (
-                    f"У {name} есть {adj} {sibling_type}. Как это будет по-китайски?\n"
-                    f"  □ {options[0]}\n"
-                    f"  □ {options[1]}"
-                )
+                    options = [correct, wrong]
+                    random.shuffle(options)
+                    ex = (
+                        f"У {name} есть {adj} {sibling_type}. Как это будет по-китайски?\n"
+                        f"  □ {options[0]}\n"
+                        f"  □ {options[1]}"
+                    )
 
-            elif task_type == "correct_mistake":
-                ex = (
-                    "Исправь ошибку: «我有弟弟» — но на самом деле он СТАРШЕ меня. "
-                    f"Правильно: {ANSWER_LINE}"
-                )
+                elif task_type == "correct_mistake":
+                    ex = (
+                        "Исправь ошибку: «我有弟弟» — но на самом деле он СТАРШЕ меня. "
+                        f"Правильно: {ANSWER_LINE}"
+                    )
 
-            if ex not in used_exercises:
-                used_exercises.add(ex)
-                exercises.append(ex)
+                # Фильтр: не добавлять пустые или слишком длинные строки
+                if ex and len(ex) < 200 and ex not in used_exercises:
+                    used_exercises.add(ex)
+                    exercises.append(ex)
 
+            except Exception:
+                # На случай неожиданной ошибки — пропустить итерацию
+                continue
+
+        # Творческое задание — с переносом строки и полным списком
         exercises.append(
             "Напиши 2–3 предложения о своей семье на китайском языке.\n"
-            "Используй слова: 爸爸, 妈妈 и одно из: 哥哥, 姐姐, 弟弟 или 妹妹."
+            "Используй слова: 爸爸, 妈妈 и одно из: 哥哥, 姐姐, 弟弟, 妹妹."
         )
         return exercises
 
     # === СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ ТЕМ ===
-    if theme_type == "vocabulary":
-        pairs = list(data.items())
-        for _ in range(count):
-            chinese, russian = random.choice(pairs)
-            if not chinese.strip() or not russian.strip():
-                continue
-            if random.choice([True, False]):
-                exercises.append(f"Переведи: {russian} → {ANSWER_LINE}")
-            else:
-                exercises.append(f"Напиши по-русски: {chinese} → {ANSWER_LINE}")
+    pairs = [(k, v) for k, v in data.items() if k and v]
+    if not pairs:
+        return [f"{i}. Данные отсутствуют" for i in range(1, count + 1)]
 
-    elif theme_type == "grammar":
-        pairs = list(data.items())
-        for _ in range(count):
-            chinese, russian = random.choice(pairs)
-            if not chinese.strip() or not russian.strip():
-                continue
+    for _ in range(count):
+        chinese, russian = random.choice(pairs)
+        if theme_type == "vocabulary":
             if random.choice([True, False]):
-                exercises.append(f"Переведи: {russian} → {ANSWER_LINE}")
+                ex = f"Переведи: {russian} → {ANSWER_LINE}"
             else:
-                exercises.append(f"Составь фразу: {chinese} → {ANSWER_LINE}")
-
-    elif theme_type == "numbers":
-        numbers = list(data.keys())
-        for _ in range(count):
-            num = random.choice(numbers)
+                ex = f"Напиши по-русски: {chinese} → {ANSWER_LINE}"
+        elif theme_type == "grammar":
+            if random.choice([True, False]):
+                ex = f"Переведи: {russian} → {ANSWER_LINE}"
+            else:
+                ex = f"Составь фразу: {chinese} → {ANSWER_LINE}"
+        elif theme_type == "numbers":
+            num = random.choice(list(data.keys()))
             chinese = data[num]
             if random.choice([True, False]):
-                exercises.append(f"Напиши по-китайски: {num} → {ANSWER_LINE}")
+                ex = f"Напиши по-китайски: {num} → {ANSWER_LINE}"
             else:
-                exercises.append(f"Напиши цифру: {chinese} → {ANSWER_LINE}")
+                ex = f"Напиши цифру: {chinese} → {ANSWER_LINE}"
+        else:
+            ex = f"Задание: {chinese} → {ANSWER_LINE}"
+
+        if ex and len(ex) < 200:
+            exercises.append(ex)
 
     return exercises[:count]
 
