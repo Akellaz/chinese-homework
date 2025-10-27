@@ -150,7 +150,7 @@ class ChinesePDF(FPDF):
         self.set_font("NotoSansTC", size=10)
         self.cell(0, 10, f"Сгенерировано: {datetime.now().strftime('%d.%m.%Y')}", align='C')
 
-def create_pdf(title, theory, exercises, answers=None, theme_data=None, theme_type=None):
+def create_pdf(title, theory, exercises, answers=None):
     pdf = ChinesePDF()
     pdf.add_page()
     
@@ -165,35 +165,15 @@ def create_pdf(title, theory, exercises, answers=None, theme_data=None, theme_ty
         pdf.multi_cell(w=0, h=7, text=line)
     pdf.ln(5)
     
-    # === СЛОВАРИК (только для vocabulary-тем) ===
-    if theme_type == "vocabulary" and theme_data:
-        pdf.set_font("NotoSansTC", size=12)
-        pdf.cell(0, 10, "Словарик:", new_x="LMARGIN", new_y="NEXT")
-        
-        # Форматируем слова в 2 колонки (простой способ — по 4 слова в строке)
-        words = list(theme_data.items())
-        line = ""
-        for i, (ch, ru) in enumerate(words):
-            pair = f"{ch} — {ru}"
-            if i % 2 == 0:
-                # Начинаем новую строку
-                if line:
-                    pdf.multi_cell(w=0, h=7, text=line)
-                line = pair.ljust(25)  # выравнивание через пробелы (упрощённо)
-            else:
-                line += "    " + pair
-        # Остаток
-        if line:
-            pdf.multi_cell(w=0, h=7, text=line)
-        pdf.ln(8)
-
-    # Упражнения
+    # Упражнения — с multi_cell для переноса строк
     pdf.set_font("NotoSansTC", size=12)
     for i, ex in enumerate(exercises, 1):
+        # Добавляем номер и текст задания
+        pdf.set_font("NotoSansTC", size=12)
         pdf.multi_cell(w=0, h=8, text=f"{i}. {ex}")
-        pdf.ln(2)
+        pdf.ln(2)  # небольшой отступ между заданиями
 
-    # Ответы
+    # Ответы (опционально)
     if answers:
         pdf.add_page()
         pdf.set_font("NotoSansTC", size=14)
@@ -204,12 +184,14 @@ def create_pdf(title, theory, exercises, answers=None, theme_data=None, theme_ty
             pdf.multi_cell(w=0, h=8, text=f"{i}. {ans}")
             pdf.ln(2)
 
+    # Генерация имени файла и сохранение
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     import tempfile
     filepath = os.path.join(tempfile.gettempdir(), filename)
     os.makedirs('temp', exist_ok=True)
     pdf.output(filepath)
     return filepath
+
 
 
 # ==================== МАРШРУТЫ ====================
@@ -234,11 +216,9 @@ def generate_pdf_route(theme_id):
     exercises = generate_exercises(theme, count)
 
     pdf_path = create_pdf(
-    title=theme["name"],
-    theory=theme["theory"],
-    exercises=exercises,
-    answers=None,
-    theme_data=theme["data"],
-    theme_type=theme["type"]
-)
+        title=theme["name"],
+        theory=theme["theory"],
+        exercises=exercises,
+        answers=None
+    )
     return send_file(pdf_path, as_attachment=True)
