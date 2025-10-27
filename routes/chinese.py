@@ -160,6 +160,78 @@ def generate_exercises(theme_config, count=15):
         return exercises
 
 
+        # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ HSK 3 ===
+    if theme_config.get("name") == "Повседневные ситуации (HSK 3)":
+        pairs = [(k, v) for k, v in theme_config["data"].items() if k and v]
+        used = set()
+
+        while len(exercises) < count:
+            task_type = random.choices(
+                ["translate_ru_to_ch", "complete_sentence", "choose_correct", "fix_word_order", "make_sentence"],
+                weights=[3, 2, 2, 2, 1]
+            )[0]
+
+            try:
+                if task_type == "translate_ru_to_ch":
+                    ru, ch = random.choice(pairs)
+                    ex = f"Переведи на китайский (естественно, как носитель):\n{ru}\n→ ____________"
+
+                elif task_type == "complete_sentence":
+                    prompts = [
+                        ("Вчера я хотел пойти в кино, но", "у меня заболела голова."),
+                        ("Если завтра будет солнечно, мы", "пойдём в парк."),
+                        ("Я не знаю, где", "мой телефон."),
+                        ("Она устала, потому что", "работала весь день."),
+                        ("Хотя он занят,", "он помог мне.")
+                    ]
+                    start, end = random.choice(prompts)
+                    ex = f"Заверши предложение логично:\n{start} ________"
+
+                elif task_type == "choose_correct":
+                    correct_examples = [
+                        "我把书放在桌子上了。",
+                        "这个电影比那个有意思。",
+                        "我还没做作业呢。",
+                        "虽然下雨，但是我还是去散步。"
+                    ]
+                    wrong_examples = [
+                        "我放书在桌子上了。",
+                        "这个电影比那个更更有趣。",
+                        "我没做作业已经。",
+                        "虽然下雨，但是我还是去散步了。"  # лишнее 了
+                    ]
+                    corr = random.choice(correct_examples)
+                    wrong = random.choice(wrong_examples)
+                    opts = [corr, wrong]
+                    random.shuffle(opts)
+                    ex = f"Выбери грамматически правильный вариант:\n  □ {opts[0]}\n  □ {opts[1]}"
+
+                elif task_type == "fix_word_order":
+                    scrambled = [
+                        ("桌子上了 / 书 / 我把 / 放在", "我把书放在桌子上了。"),
+                        ("电影 / 那个 / этот / интереснее", "这个电影比那个有意思。"),
+                        ("作业 / 我 / сделай / ещё / не", "我还没做作业呢。")
+                    ]
+                    wrong, correct = random.choice(scrambled)
+                    ex = f"Собери предложение из слов:\n{wrong}\n→ ____________"
+
+                elif task_type == "make_sentence":
+                    prompts = [
+                        ("Сделай предложение с 把: (книга, положить, полка)", "我把书放在书架上了。"),
+                        ("Сравни два фильма с 比", "这个电影比那个好看。"),
+                        ("Используй 因为…所以…: (дождь, не пойти в парк)", "因为下雨，所以我们没去公园。")
+                    ]
+                    instruction, _ = random.choice(prompts)
+                    ex = f"{instruction}\n→ ____________"
+
+                if ex and len(ex) < 300 and ex not in used:
+                    used.add(ex)
+                    exercises.append(ex)
+            except Exception:
+                continue
+
+        return exercises[:count]
+
     # === УНИВЕРСАЛЬНАЯ ЛОГИКА ДЛЯ ВСЕХ ОСТАЛЬНЫХ ТЕМ ===
     for _ in range(count):
         chinese, russian = random.choice(data_pairs)
