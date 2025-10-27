@@ -160,7 +160,7 @@ def generate_exercises(theme_config, count=15):
         return exercises
 
 
-        # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ HSK 3 ===
+    # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ HSK 3 ===
     if theme_config.get("name") == "Повседневные ситуации (HSK 3)":
         pairs = [(k, v) for k, v in theme_config["data"].items() if k and v]
         used = set()
