@@ -162,15 +162,17 @@ def create_pdf(title, theory, exercises, answers=None):
     # Теория
     pdf.set_font("NotoSansTC", size=12)
     for line in theory:
-        pdf.multi_cell(w=190, h=8, text=line)
+        pdf.multi_cell(w=0, h=7, text=line)
     pdf.ln(5)
     
-    # Упражнения
+    # Упражнения — с multi_cell для переноса строк
     pdf.set_font("NotoSansTC", size=12)
     for i, ex in enumerate(exercises, 1):
-        pdf.cell(0, 10, f"{i}. {ex}", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(10)
-    
+        # Добавляем номер и текст задания
+        pdf.set_font("NotoSansTC", size=12)
+        pdf.multi_cell(w=0, h=8, text=f"{i}. {ex}")
+        pdf.ln(2)  # небольшой отступ между заданиями
+
     # Ответы (опционально)
     if answers:
         pdf.add_page()
@@ -179,8 +181,10 @@ def create_pdf(title, theory, exercises, answers=None):
         pdf.ln(5)
         pdf.set_font("NotoSansTC", size=12)
         for i, ans in enumerate(answers, 1):
-            pdf.cell(0, 8, f"{i}. {ans}", new_x="LMARGIN", new_y="NEXT")
-    
+            pdf.multi_cell(w=0, h=8, text=f"{i}. {ans}")
+            pdf.ln(2)
+
+    # Генерация имени файла и сохранение
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     import tempfile
     filepath = os.path.join(tempfile.gettempdir(), filename)
