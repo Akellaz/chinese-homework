@@ -1,3 +1,4 @@
+# routes/chinese.py
 import os
 import random
 from datetime import datetime
@@ -12,11 +13,10 @@ chinese_bp = Blueprint('chinese', __name__, template_folder='../templates/chines
 # ==================== ГЕНЕРАТОР УПРАЖНЕНИЙ ДЛЯ ВСЕХ ТЕМ ====================
 
 def generate_exercises(theme_config, count=15):
-    ANSWER_LINE = "____________"  # 12 символов — безопасно для FPDF
+    ANSWER_LINE = "____________"
 
     theme_type = theme_config["type"]
     raw_data = theme_config["data"]
-    # Фильтруем пустые/некорректные пары
     data_pairs = [(k, v) for k, v in raw_data.items() if k and v and str(k).strip() and str(v).strip()]
     exercises = []
 
@@ -78,8 +78,6 @@ def generate_exercises(theme_config, count=15):
         )
         return exercises
 
-
-         # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ ТЕМЫ "Дата" ===
     # Специальная логика для "Дата"
     if theme_config.get("name") == "Дата":
         today = datetime.now()
@@ -87,7 +85,6 @@ def generate_exercises(theme_config, count=15):
                      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
         today_ru = f"{today.day} {months_ru[today.month - 1]} {today.year} года"
 
-        # Расширенный список событий
         events = [
             ("Новый год", "1月1日", "1 января"),
             ("Мой день рождения", "5月3日", "3 мая"),
@@ -97,7 +94,6 @@ def generate_exercises(theme_config, count=15):
             ("День защиты детей", "6月1日", "1 июня"),
         ]
 
-        # Возможные ошибки в порядке
         wrong_orders = [
             "{day}年{month}月{year}日",
             "{month}日{day}月{year}年",
@@ -109,23 +105,19 @@ def generate_exercises(theme_config, count=15):
         while len(exercises) < count - 1:
             task_type = random.choices(
                 ["today_fill", "birthday_fill", "translate_date", "write_date", "correct_mistake", "event_date", "ask_question"],
-                weights=[2, 2, 2, 2, 1, 2, 1]  # убрали "choose_format", добавили новые типы
+                weights=[2, 2, 2, 2, 1, 2, 1]
             )[0]
 
             try:
                 if task_type == "today_fill":
                     ex = f"Сегодня {today_ru}. Напиши это по-китайски:\n今天是______年______月______日。"
-
                 elif task_type == "birthday_fill":
                     ex = "Мой день рождения — 12 апреля. Напиши это по-китайски:\n我的生日是______月______日。"
-
                 elif task_type == "translate_date":
                     sample_dates = ["2025年10月27日", "1999年5月3日", "2004年12月31日", "2030年7月15日"]
                     ch_date = random.choice(sample_dates)
                     ex = f"Переведи на русский: {ch_date} → ______"
-
                 elif task_type == "write_date":
-                    # Дано по-русски — написать по-китайски
                     ru_examples = [
                         ("15 марта 2010 года", "2010年3月15日"),
                         ("30 декабря 1985 года", "1985年12月30日"),
@@ -133,17 +125,14 @@ def generate_exercises(theme_config, count=15):
                     ]
                     ru, _ = random.choice(ru_examples)
                     ex = f"Напиши по-китайски: {ru} → ______"
-
                 elif task_type == "correct_mistake":
                     year, month, day = 2025, 10, 27
                     wrong_fmt = random.choice(wrong_orders)
                     wrong_str = wrong_fmt.format(year=year, month=month, day=day)
                     ex = f"Исправь ошибку: 今天是{wrong_str}。 Правильно: ________________________"
-
                 elif task_type == "event_date":
                     name, ch, ru = random.choice(events)
                     ex = f"{name} отмечают {ru}. Напиши дату по-китайски: ______"
-
                 elif task_type == "ask_question":
                     ex = "Как спросить «Какое сегодня число?» по-китайски? Напиши: ______"
 
@@ -159,6 +148,7 @@ def generate_exercises(theme_config, count=15):
             "2. Дату своего дня рождения."
         )
         return exercises
+
     # Специальная логика для "HSK3"
     if theme_config.get("name") == "Повседневные ситуации (HSK 3)":
         pairs = [(k, v) for k, v in theme_config["data"].items() if k and v]
@@ -174,7 +164,6 @@ def generate_exercises(theme_config, count=15):
                 if task_type == "translate_ru_to_ch":
                     ru, ch = random.choice(pairs)
                     ex = f"Переведи на китайский (естественно, как носитель):\n{ru}\n→ ____________"
-
                 elif task_type == "complete_sentence":
                     prompts = [
                         ("Вчера я хотел пойти в кино, но", "у меня заболела голова."),
@@ -185,7 +174,6 @@ def generate_exercises(theme_config, count=15):
                     ]
                     start, end = random.choice(prompts)
                     ex = f"Заверши предложение логично:\n{start} ________"
-
                 elif task_type == "choose_correct":
                     correct_examples = [
                         "我把书放在桌子上了。",
@@ -197,14 +185,13 @@ def generate_exercises(theme_config, count=15):
                         "我放书在桌子上了。",
                         "这个电影比那个更更有趣。",
                         "我没做作业已经。",
-                        "虽然下雨，但是我还是去散步了。"  # лишнее 了
+                        "虽然下雨，但是我还是去散步了."
                     ]
                     corr = random.choice(correct_examples)
                     wrong = random.choice(wrong_examples)
                     opts = [corr, wrong]
                     random.shuffle(opts)
                     ex = f"Выбери грамматически правильный вариант:\n  □ {opts[0]}\n  □ {opts[1]}"
-
                 elif task_type == "fix_word_order":
                     scrambled = [
                         ("桌子上了 / 书 / 我把 / 放在", "我把书放在桌子上了。"),
@@ -213,7 +200,6 @@ def generate_exercises(theme_config, count=15):
                     ]
                     wrong, correct = random.choice(scrambled)
                     ex = f"Собери предложение из слов:\n{wrong}\n→ ____________"
-
                 elif task_type == "make_sentence":
                     prompts = [
                         ("Сделай предложение с 把: (книга, положить, полка)", "我把书放在书架上了。"),
@@ -231,7 +217,7 @@ def generate_exercises(theme_config, count=15):
 
         return exercises[:count]
 
-    # === УНИВЕРСАЛЬНАЯ ЛОГИКА ДЛЯ ВСЕХ ОСТАЛЬНЫХ ТЕМ ===
+    # УНИВЕРСАЛЬНАЯ ЛОГИКА
     for _ in range(count):
         chinese, russian = random.choice(data_pairs)
         if theme_type == "vocabulary":
@@ -241,7 +227,6 @@ def generate_exercises(theme_config, count=15):
             ex = f"Переведи: {russian} → {ANSWER_LINE}" if random.choice([True, False]) \
                 else f"Составь фразу: {chinese} → {ANSWER_LINE}"
         elif theme_type == "numbers":
-            # Для чисел: данные — это {число: иероглиф}
             num = random.choice(list(raw_data.keys()))
             ch_num = raw_data[num]
             ex = f"Напиши по-китайски: {num} → {ANSWER_LINE}" if random.choice([True, False]) \
@@ -283,25 +268,21 @@ def create_pdf(title, theory, exercises, answers=None):
     pdf = ChinesePDF()
     pdf.add_page()
 
-    # Заголовок
     pdf.set_font("NotoSansTC", size=16)
     pdf.cell(pdf.epw, 10, title, new_x="LMARGIN", new_y="NEXT", align='C')
     pdf.ln(8)
 
-    # Теория
     pdf.set_font("NotoSansTC", size=12)
     for line in theory:
         text = str(line).strip() if line else ""
         pdf.multi_cell(w=pdf.epw, h=7, text=text)
     pdf.ln(5)
 
-    # Упражнения
     for i, ex in enumerate(exercises, 1):
         pdf.set_font("NotoSansTC", size=12)
         pdf.multi_cell(w=pdf.epw, h=8, text=f"{i}. {ex}")
         pdf.ln(2)
 
-    # Ответы (если понадобятся)
     if answers:
         pdf.add_page()
         pdf.set_font("NotoSansTC", size=14)
@@ -314,7 +295,91 @@ def create_pdf(title, theory, exercises, answers=None):
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     import tempfile
     filepath = os.path.join(tempfile.gettempdir(), filename)
-    os.makedirs('temp', exist_ok=True)
+    pdf.output(filepath)
+    return filepath
+
+
+# ==================== ГОТОВЫЙ УРОК: СЕМЬЯ С КАРТИНКАМИ ====================
+
+def create_ready_lesson_pdf_family():
+    pdf = ChinesePDF()
+    pdf.add_page()
+
+    pdf.set_font("NotoSansTC", size=18)
+    pdf.cell(pdf.epw, 10, "我的家庭 — Моя семья", new_x="LMARGIN", new_y="NEXT", align='C')
+    pdf.set_font("NotoSansTC", size=12)
+    pdf.cell(pdf.epw, 6, "Домашнее задание • HSK 3", new_x="LMARGIN", new_y="NEXT", align='C')
+    pdf.ln(4)
+    pdf.multi_cell(pdf.epw, 6, "Напиши по одному предложению к каждой картинке. Используй слова: 爸爸, 妈妈, 哥哥, 妹妹, 爷爷, 奶奶, 在, 爱, 喜欢, 一起...")
+    pdf.ln(6)
+
+    image_dir = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'family')
+
+    for i in range(1, 7):
+        image_path = os.path.join(image_dir, f"{i}.png")
+        if os.path.exists(image_path):
+            pdf.image(image_path, x=pdf.l_margin, w=pdf.epw)
+        else:
+            pdf.set_fill_color(240, 240, 240)
+            pdf.rect(pdf.l_margin, pdf.get_y(), pdf.epw, 40, style='F')
+            pdf.set_text_color(100, 100, 100)
+            pdf.set_xy(pdf.l_margin, pdf.get_y() + 15)
+            pdf.cell(pdf.epw, 10, f"[Изображение {i} отсутствует]", align='C')
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(40)
+
+        pdf.ln(4)
+        pdf.set_font("NotoSansTC", size=12)
+        pdf.cell(pdf.epw, 8, "Напиши предложение на китайском:", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(pdf.epw, 8, "________________________________________________________", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(pdf.epw, 8, "Перевод на русский:", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(pdf.epw, 8, "________________________________________________________", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(8)
+
+    # Словарик
+    pdf.add_page()
+    pdf.set_font("NotoSansTC", size=14)
+    pdf.cell(pdf.epw, 10, "Слова по теме «Семья» (HSK 3)", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    vocab = [
+        "爸爸 — папа", "妈妈 — мама", "哥哥 — старший брат", "姐姐 — старшая сестра",
+        "弟弟 — младший брат", "妹妹 — младшая сестра", "爷爷 — дедушка (по отцу)",
+        "奶奶 — бабушка (по отцу)", "家人 — члены семьи", "一起 — вместе",
+        "爱 — любить", "喜欢 — нравиться", "在 — находится / занимается",
+        "做饭 — готовить еду", "看书 — читать книгу"
+    ]
+    for item in vocab:
+        pdf.set_font("NotoSansTC", size=12)
+        pdf.cell(pdf.epw, 8, item, new_x="LMARGIN", new_y="NEXT")
+
+    # Бонус
+    pdf.add_page()
+    pdf.set_font("NotoSansTC", size=14)
+    pdf.cell(pdf.epw, 10, "Бонус: Напиши о своей семье (3–5 предложений)", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(8)
+    for _ in range(5):
+        pdf.cell(pdf.epw, 8, "________________________________________________________", new_x="LMARGIN", new_y="NEXT")
+
+    # Ответы
+    pdf.add_page()
+    pdf.set_font("NotoSansTC", size=14)
+    pdf.cell(pdf.epw, 10, "Ответы (для самопроверки)", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    answers = [
+        "我爸爸在做饭。",
+        "我妈妈喜欢看书。",
+        "我哥哥会踢足球。",
+        "我妹妹在画画。",
+        "我爷爷和奶奶在公园里。",
+        "我们一家人一起吃晚饭。"
+    ]
+    for i, ans in enumerate(answers, 1):
+        pdf.set_font("NotoSansTC", size=12)
+        pdf.cell(pdf.epw, 8, f"{i}. {ans}", new_x="LMARGIN", new_y="NEXT")
+
+    filename = "Моя_семья_HSK3_готовый_урок.pdf"
+    import tempfile
+    filepath = os.path.join(tempfile.gettempdir(), filename)
     pdf.output(filepath)
     return filepath
 
@@ -342,11 +407,16 @@ def generate_pdf_route(theme_id):
     theme = THEMES[theme_id]
     exercises = generate_exercises(theme, count)
 
-    # Передаём ТОЛЬКО оригинальную теорию (без словарика)
     pdf_path = create_pdf(
         title=theme["name"],
         theory=theme["theory"],
         exercises=exercises,
         answers=None
     )
+    return send_file(pdf_path, as_attachment=True)
+
+
+@chinese_bp.route('/download_ready_lesson/family')
+def download_ready_lesson_family():
+    pdf_path = create_ready_lesson_pdf_family()
     return send_file(pdf_path, as_attachment=True)

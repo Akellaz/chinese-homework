@@ -23,6 +23,19 @@
                 {% endfor %}
             </div>
 
+
+
+            <!-- Где-то в начале страницы темы -->
+{% if theme.get('ready_lesson') %}
+<div style="text-align: center; margin: 20px 0;">
+  <a href="{{ url_for('chinese.download_ready_lesson_family') }}"
+     style="display: inline-block; padding: 12px 24px; background: #0d6efd; color: white; 
+            text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+    📥 Скачать готовый урок: «Моя семья — HSK 3» (PDF с картинками)
+  </a>
+</div>
+{% endif %}
+
             <div class="pdf-form">
                 <form method="POST" action="/chinese/generate_pdf/{{ theme_id }}">
                     <label>
