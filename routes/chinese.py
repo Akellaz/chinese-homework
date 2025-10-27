@@ -1,4 +1,3 @@
-# routes/chinese.py
 import os
 import random
 from datetime import datetime
@@ -11,13 +10,9 @@ from .themes import THEMES
 chinese_bp = Blueprint('chinese', __name__, template_folder='../templates/chinese')
 
 
-
 # ==================== УНИВЕРСАЛЬНЫЙ ГЕНЕРАТОР УПРАЖНЕНИЙ ====================
 
-import random
-
 def generate_exercises(theme_config, count=15):
-    # Длинное поле для письма — 24 символа подчёркивания
     ANSWER_LINE = "________________________"
 
     theme_type = theme_config["type"]
@@ -34,9 +29,8 @@ def generate_exercises(theme_config, count=15):
         senior_terms = {"哥哥", "姐姐"}
         junior_terms = {"弟弟", "妹妹"}
 
-        used_exercises = set()  # избегаем повторов
+        used_exercises = set()
 
-        # Генерируем все задания, кроме последнего (творческого)
         while len(exercises) < count - 1:
             task_type = random.choices(
                 ["translate", "context_fill", "choose_senior_junior", "correct_mistake"],
@@ -45,6 +39,8 @@ def generate_exercises(theme_config, count=15):
 
             if task_type == "translate":
                 chinese, russian = random.choice(family_words)
+                if not chinese.strip() or not russian.strip():
+                    continue
                 if random.choice([True, False]):
                     ex = f"Переведи на русский: {chinese} → {ANSWER_LINE}"
                 else:
@@ -87,15 +83,13 @@ def generate_exercises(theme_config, count=15):
                     f"Правильно: {ANSWER_LINE}"
                 )
 
-            # Добавляем только уникальные задания
             if ex not in used_exercises:
                 used_exercises.add(ex)
                 exercises.append(ex)
 
-        # Творческое задание — всегда последнее, без поля для ответа
         exercises.append(
             "Напиши 2–3 предложения о своей семье на китайском языке.\n"
-            "Используй слова: 爸爸, 妈妈 и одно из: 哥哥, 姐姐, 弟弟, 妹妹."
+            "Используй слова: 爸爸, 妈妈 и одно из: 哥哥, 姐姐, 弟弟 или 妹妹."
         )
         return exercises
 
@@ -104,6 +98,8 @@ def generate_exercises(theme_config, count=15):
         pairs = list(data.items())
         for _ in range(count):
             chinese, russian = random.choice(pairs)
+            if not chinese.strip() or not russian.strip():
+                continue
             if random.choice([True, False]):
                 exercises.append(f"Переведи: {russian} → {ANSWER_LINE}")
             else:
@@ -113,6 +109,8 @@ def generate_exercises(theme_config, count=15):
         pairs = list(data.items())
         for _ in range(count):
             chinese, russian = random.choice(pairs)
+            if not chinese.strip() or not russian.strip():
+                continue
             if random.choice([True, False]):
                 exercises.append(f"Переведи: {russian} → {ANSWER_LINE}")
             else:
@@ -129,6 +127,7 @@ def generate_exercises(theme_config, count=15):
                 exercises.append(f"Напиши цифру: {chinese} → {ANSWER_LINE}")
 
     return exercises[:count]
+
 
 # ==================== PDF ГЕНЕРАТОР (с NotoSansTC) ====================
 
@@ -150,6 +149,7 @@ class ChinesePDF(FPDF):
         self.set_font("NotoSansTC", size=10)
         self.cell(0, 10, f"Сгенерировано: {datetime.now().strftime('%d.%m.%Y')}", align='C')
 
+
 def create_pdf(title, theory, exercises, answers=None):
     pdf = ChinesePDF()
     pdf.add_page()
@@ -165,13 +165,10 @@ def create_pdf(title, theory, exercises, answers=None):
         pdf.multi_cell(w=0, h=7, text=line)
     pdf.ln(5)
     
-    # Упражнения — с multi_cell для переноса строк
-    pdf.set_font("NotoSansTC", size=12)
+    # Упражнения
     for i, ex in enumerate(exercises, 1):
-        # Добавляем номер и текст задания
-        pdf.set_font("NotoSansTC", size=12)
         pdf.multi_cell(w=0, h=8, text=f"{i}. {ex}")
-        pdf.ln(2)  # небольшой отступ между заданиями
+        pdf.ln(2)
 
     # Ответы (опционально)
     if answers:
@@ -179,12 +176,10 @@ def create_pdf(title, theory, exercises, answers=None):
         pdf.set_font("NotoSansTC", size=14)
         pdf.cell(0, 10, "Ответы (для учителя)", new_x="LMARGIN", new_y="NEXT", align='C')
         pdf.ln(5)
-        pdf.set_font("NotoSansTC", size=12)
         for i, ans in enumerate(answers, 1):
             pdf.multi_cell(w=0, h=8, text=f"{i}. {ans}")
             pdf.ln(2)
 
-    # Генерация имени файла и сохранение
     filename = f"{title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     import tempfile
     filepath = os.path.join(tempfile.gettempdir(), filename)
@@ -193,18 +188,19 @@ def create_pdf(title, theory, exercises, answers=None):
     return filepath
 
 
-
 # ==================== МАРШРУТЫ ====================
 
 @chinese_bp.route('/')
 def index():
     return render_template('chinese/index.html', themes=THEMES)
 
+
 @chinese_bp.route('/<theme_id>')
 def theme_page(theme_id):
     if theme_id not in THEMES:
         return "Тема не найдена", 404
     return render_template('chinese/module.html', theme_id=theme_id, theme=THEMES[theme_id])
+
 
 @chinese_bp.route('/generate_pdf/<theme_id>', methods=['POST'])
 def generate_pdf_route(theme_id):
@@ -215,9 +211,17 @@ def generate_pdf_route(theme_id):
     theme = THEMES[theme_id]
     exercises = generate_exercises(theme, count)
 
+    # Добавляем словарик в теорию для vocabulary-тем
+    full_theory = theme["theory"].copy()
+    if theme["type"] == "vocabulary":
+        full_theory.append("")
+        full_theory.append("Словарик:")
+        for chinese, russian in theme["data"].items():
+            full_theory.append(f"{chinese} — {russian}")
+
     pdf_path = create_pdf(
         title=theme["name"],
-        theory=theme["theory"],
+        theory=full_theory,
         exercises=exercises,
         answers=None
     )
