@@ -21,12 +21,10 @@ def generate_exercises(theme_config, count=15):
 
     # Специальная обработка темы "Семья"
     if theme_config.get("name") == "Семья":
-        # Подготовим данные
-        family_words = list(data.items())  # [('爸爸', 'отец'), ...]
+        family_words = list(data.items())
         chinese_to_russian = data
         russian_to_chinese = {v: k for k, v in data.items()}
 
-        # Словарь для определения "старший/младший"
         senior_junior = {
             "哥哥": "старший брат", "姐姐": "старшая сестра",
             "弟弟": "младший брат", "妹妹": "младшая сестра"
@@ -34,68 +32,63 @@ def generate_exercises(theme_config, count=15):
         senior_terms = {"哥哥", "姐姐"}
         junior_terms = {"弟弟", "妹妹"}
 
-        # Генерируем задания
-        for i in range(count):
-            if i == count - 1:  # Последнее — творческое
-                exercises.append("Напиши 2–3 предложения о своей семье на китайском языке. Используй слова: 爸爸, 妈妈 и одно слово из: 哥哥/姐姐/弟弟/妹妹.")
-                break
+        used_exercises = set()  # для отслеживания дублей
 
+        # Генерируем до нужного количества, но оставляем место для творческого задания
+        while len(exercises) < count - 1:
             task_type = random.choices(
                 ["translate", "context_fill", "choose_senior_junior", "correct_mistake"],
-                weights=[4, 3, 2, 1]  # чаще — перевод и контекст
+                weights=[4, 3, 2, 1]
             )[0]
 
             if task_type == "translate":
                 chinese, russian = random.choice(family_words)
                 if random.choice([True, False]):
-                    exercises.append(f"Переведи на русский: {chinese} → ______")
+                    ex = f"Переведи на русский: {chinese} → ______"
                 else:
-                    exercises.append(f"Напиши по-китайски: {russian} → ______")
+                    ex = f"Напиши по-китайски: {russian} → ______"
 
             elif task_type == "context_fill":
-                # Выбираем ребёнка из семьи
-                child_word, child_meaning = random.choice(list(senior_junior.items()))
-                gender = "брат" if "брат" in child_meaning else "сестра"
-                age_relation = "старше" if child_word in senior_terms else "младше"
-
-                exercises.append(
-                    f"У меня есть {child_meaning}. Значит, он/она {age_relation} меня. Напиши это по-китайски: ______"
-                )
+                child_word = random.choice(list(senior_junior.keys()))
+                meaning = senior_junior[child_word]
+                ex = f"У меня есть {meaning}. Значит, он/она {'старше' if child_word in senior_terms else 'младше'} меня. Напиши это по-китайски: ______"
 
             elif task_type == "choose_senior_junior":
-                # Генерируем ситуацию
-                name = random.choice(["Ли Миня", "Аню", "Таню", "Ваню"])
+                name = random.choice(["Ли Миня", "Ани", "Тани", "Вани"])
                 sibling_type = random.choice(["брат", "сестра"])
-                relation = random.choice(["старше", "младше"])
+                is_senior = random.choice([True, False])
                 
-                # Определяем правильный вариант
                 if sibling_type == "брат":
-                    correct = "哥哥" if relation == "старше" else "弟弟"
-                    wrong = "弟弟" if relation == "старше" else "哥哥"
+                    correct = "哥哥" if is_senior else "弟弟"
+                    wrong = "弟弟" if is_senior else "哥哥"
+                    adj = "старший" if is_senior else "младший"
                 else:
-                    correct = "姐姐" if relation == "старше" else "妹妹"
-                    wrong = "妹妹" if relation == "старше" else "姐姐"
+                    correct = "姐姐" if is_senior else "妹妹"
+                    wrong = "妹妹" if is_senior else "姐姐"
+                    adj = "старшая" if is_senior else "младшая"
 
                 options = [correct, wrong]
                 random.shuffle(options)
-                exercises.append(
-                    f"У {name} есть {relation} {sibling_type}. Как это будет по-китайски?\n"
+                ex = (
+                    f"У {name} есть {adj} {sibling_type}. Как это будет по-китайски?\n"
                     f"  □ {options[0]}\n"
                     f"  □ {options[1]}"
                 )
 
             elif task_type == "correct_mistake":
-                # Распространённая ошибка: путают старшего/младшего
-                wrong_word, wrong_meaning = random.choice(list(senior_junior.items()))
-                if wrong_word in senior_terms:
-                    correct_word = wrong_word.replace("哥", "弟") if "哥" in wrong_word else wrong_word.replace("姐", "妹")
-                else:
-                    correct_word = wrong_word.replace("弟", "哥") if "弟" in wrong_word else wrong_word.replace("妹", "姐")
-                
-                exercises.append(
-                    f"Исправь ошибку: «我有弟弟» — но на самом деле он СТАРШЕ меня. Правильно: ______"
-                )
+                # Всегда одна и та же логика ошибки — но формулировка едина
+                ex = "Исправь ошибку: «我有弟弟» — но на самом деле он СТАРШЕ меня. Правильно: ______"
 
+            # Избегаем дублей
+            if ex not in used_exercises:
+                used_exercises.add(ex)
+                exercises.append(ex)
+
+        # Творческое задание — всегда последнее
+        exercises.append(
+            "Напиши 2–3 предложения о своей семье на китайском языке. "
+            "Используй слова: 爸爸, 妈妈 и одно слово из: 哥哥, 姐姐, 弟弟 или 妹妹."
+        )
         return exercises
 
     # === СТАРАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ ТЕМ ===
