@@ -78,6 +78,70 @@ def generate_exercises(theme_config, count=15):
         )
         return exercises
 
+
+        # === СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ ТЕМЫ "Дата" ===
+    if theme_config.get("name") == "Дата":
+        # Сегодняшняя дата для примеров
+        today = datetime.now()
+        today_str = f"{today.year}年{today.month}月{today.day}日"
+        today_ru = f"{today.day} {['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][today.month - 1]} {today.year} года"
+
+        # Праздники и примеры
+        holiday_examples = [
+            ("Новый год", "1月1日", "1 января"),
+            ("Мой день рождения", "5月3日", "3 мая"),
+            ("День учителя в Китае", "9月10日", "10 сентября"),
+            ("Национальный день КНР", "10月1日", "1 октября")
+        ]
+
+        used = set()
+        while len(exercises) < count - 1:
+            task_type = random.choices(
+                ["today_fill", "birthday_fill", "translate_date", "choose_format", "correct_mistake", "holiday"],
+                weights=[2, 2, 2, 1, 1, 2]
+            )[0]
+
+            try:
+                if task_type == "today_fill":
+                    ex = f"Сегодня {today_ru}. Напиши это по-китайски:\n今天是______年______月______日。"
+
+                elif task_type == "birthday_fill":
+                    ex = "Мой день рождения — 12 апреля. Напиши это по-китайски:\n我的生日是______月______日。"
+
+                elif task_type == "translate_date":
+                    chinese_date = random.choice(["2025年10月27日", "1999年5月3日", "2004年12月31日"])
+                    # Простой перевод на русский (без склонения)
+                    ex = f"Переведи: {chinese_date} → ______"
+
+                elif task_type == "choose_format":
+                    correct = "10月27号"
+                    wrong = random.choice(["10年27月", "10日27月", "27年10月"])
+                    opts = [correct, wrong]
+                    random.shuffle(opts)
+                    ex = f"Как правильно написать «27 октября»?\n  □ {opts[0]}\n  □ {opts[1]}"
+
+                elif task_type == "correct_mistake":
+                    ex = "Исправь ошибку: 今天是27年10月2025日。 Правильно: ________________________"
+
+                elif task_type == "holiday":
+                    name, ch, ru = random.choice(holiday_examples)
+                    ex = f"{name} — {ru}. Напиши дату по-китайски: ______"
+
+                if ex and len(ex) < 250 and ex not in used:
+                    used.add(ex)
+                    exercises.append(ex)
+            except:
+                continue
+
+        # Творческое задание
+        exercises.append(
+            "Напиши по-китайски:\n"
+            "1. Сегодняшнюю дату.\n"
+            "2. Дату своего дня рождения."
+        )
+        return exercises
+
+
     # === УНИВЕРСАЛЬНАЯ ЛОГИКА ДЛЯ ВСЕХ ОСТАЛЬНЫХ ТЕМ ===
     for _ in range(count):
         chinese, russian = random.choice(data_pairs)
