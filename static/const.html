@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Китайский ДЗ: Время (HSK 1)</title>
+  <script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #fafafa;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.4em;
+      margin-bottom: 15px;
+    }
+    #clock-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      background: white;
+    }
+    input {
+      font-size: 1.1em;
+      padding: 8px;
+      width: 200px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 1em;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #357abd;
+    }
+    #feedback {
+      margin-top: 10px;
+      font-weight: bold;
+      min-height: 2.5em;
+      line-height: 1.5;
+    }
+    .correct { color: green; }
+    .incorrect { color: red; }
+    .rule {
+      font-size: 0.95em;
+      color: #555;
+      font-style: italic;
+      margin-top: 6px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Домашнее задание по китайскому: Время (HSK 1)</h1>
+  <p>Который час? Напишите ответ по-китайски (например: <em>三点</em> или <em>七点半</em>).</p>
+
+  <div id="clock-container">
+    <canvas id="clock" width="240" height="240"></canvas>
+  </div>
+
+  <input type="text" id="answer" placeholder="三点" autocomplete="off">
+  <br>
+  <button onclick="checkAnswer()">Проверить</button>
+  <div id="feedback"></div>
+
+  <button onclick="generateNew()" style="margin-top: 15px;">Новое задание</button>
+
+  <script>
+    const timeData = [
+      {
+        hour: 3, minute: 0, answer: '三点',
+        explanation: '三点 — три часа',
+        rule: 'Целый час: [число] + 点. Например: 三点 = 3 часа.'
+      },
+      {
+        hour: 7, minute: 0, answer: '七点',
+        explanation: '七点 — семь часов',
+        rule: 'Целый час: [число] + 点. Иероглифы чисел: 一, 二, 三… 七 = семь.'
+      },
+      {
+        hour: 6, minute: 30, answer: '六点半',
+        explanation: '六点半 — половина седьмого (6:30)',
+        rule: 'Половина: [час] + 点 + 半. 半 = "половина". Пример: 六点半 = 6 часов + половина.'
+      },
+      {
+        hour: 8, minute: 30, answer: '八点半',
+        explanation: '八点半 — половина девятого',
+        rule: 'После 点 всегда идёт 半 для обозначения 30 минут. Не говорят "八点三十" на HSK 1 — упрощают до 半.'
+      },
+      {
+        hour: 12, minute: 0, answer: '十二点',
+        explanation: '十二点 — двенадцать часов',
+        rule: 'Числа от 11 и выше: 十 (10) + [единица]. 十二 = 10 + 2 = 12.'
+      },
+      {
+        hour: 10, minute: 30, answer: '十点半',
+        explanation: '十点半 — половина одиннадцатого',
+        rule: '十 = 10, 半 = 30 минут. Всё вместе: 十点半 = 10:30.'
+      },
+      {
+        hour: 2, minute: 15, answer: '两点半',
+        explanation: '两点半 — упрощённо: "половина третьего" (на самом деле 2:15, но на HSK 1 часто округляют до 半)',
+        rule: 'Для "два часа" в составных выражениях (с 点) часто говорят 两, а не 二. Поэтому: 两点半, а не 二点半.'
+      },
+      {
+        hour: 5, minute: 45, answer: '六点差一刻',
+        explanation: '六点差一刻 — без четверти шесть (5:45)',
+        rule: '[следующий час] + 点 + 差 + 一刻 = "без четверти [час]". Это выражение встречается на HSK 2+, но полезно знать заранее.'
+      }
+    ];
+
+    let currentTask = null;
+
+    function drawClock(hour, minute) {
+      const canvas = document.getElementById('clock');
+      const rc = rough.canvas(canvas);
+      const cx = 120, cy = 120, r = 100;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      rc.circle(cx, cy, r * 2, { stroke: 'black', fill: 'white', fillStyle: 'solid' });
+
+      const labels = [
+        { text: '十二', x: cx, y: cy - r + 15 },
+        { text: '三', x: cx + r - 20, y: cy + 5 },
+        { text: '六', x: cx, y: cy + r - 10 },
+        { text: '九', x: cx - r + 20, y: cy + 5 }
+      ];
+      labels.forEach(lbl => {
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(lbl.text, lbl.x, lbl.y);
+      });
+
+      const hourAngle = (hour % 12) * 30 + minute * 0.5 - 90;
+      const hX = cx + Math.cos(hourAngle * Math.PI / 180) * r * 0.5;
+      const hY = cy + Math.sin(hourAngle * Math.PI / 180) * r * 0.5;
+      rc.line(cx, cy, hX, hY, { stroke: 'black', strokeWidth: 4 });
+
+      const minAngle = minute * 6 - 90;
+      const mX = cx + Math.cos(minAngle * Math.PI / 180) * r * 0.8;
+      const mY = cy + Math.sin(minAngle * Math.PI / 180) * r * 0.8;
+      rc.line(cx, cy, mX, mY, { stroke: 'black', strokeWidth: 2 });
+    }
+
+    function generateNew() {
+      const task = timeData[Math.floor(Math.random() * timeData.length)];
+      currentTask = task;
+      drawClock(task.hour, task.minute);
+      document.getElementById('answer').value = '';
+      document.getElementById('feedback').innerHTML = '';
+    }
+
+    function checkAnswer() {
+      const input = document.getElementById('answer').value.trim();
+      const feedback = document.getElementById('feedback');
+      if (!currentTask) return;
+
+      const userAns = input.replace(/\s+/g, '');
+      const correctAns = currentTask.answer;
+
+      if (userAns === correctAns) {
+        feedback.innerHTML = '✅ Правильно! Отлично!';
+        feedback.className = 'correct';
+      } else {
+        feedback.innerHTML = `
+          ❌ Неверно.<br>
+          Правильный ответ: <strong>${correctAns}</strong><br>
+          ${currentTask.explanation}<br>
+          <span class="rule">💡 Правило: ${currentTask.rule}</span>
+        `;
+        feedback.className = 'incorrect';
+      }
+    }
+
+    window.onload = generateNew;
+  </script>
+</body>
+</html>

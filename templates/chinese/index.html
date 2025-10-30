@@ -1,4 +1,4 @@
-<!-- module.html-->
+<!-- templates/chinese/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -21,18 +21,25 @@
 
         <main class="chinese-main">
             <div class="welcome-section">
-                <h2>Выберите тему:</h2>
+                <h2>Инструменты:</h2>
+                <ul class="tools-list">
+                    <li><a href="/static/const.html" target="_blank">Конструктор заданий (время)</a></li>
+                </ul>
             </div>
 
-        <div class="topics-grid">
-  {% for id, theme in themes.items() %}
-  <div class="topic-card">
-    <div class="topic-icon">📄</div>
-    <h3>{{ theme.name }}</h3>
-    <a href="/chinese/{{ id }}" class="topic-link">Открыть →</a>
-  </div>
-  {% endfor %}
-</div>
+            <div class="welcome-section" style="margin-top: 30px;">
+                <h2>Темы домашних заданий:</h2>
+            </div>
+
+            <div class="topics-grid">
+                {% for id, theme in themes.items() %}
+                <div class="topic-card">
+                    <div class="topic-icon">📄</div>
+                    <h3>{{ theme.name }}</h3>
+                    <a href="/chinese/{{ id }}" class="topic-link">Открыть →</a>
+                </div>
+                {% endfor %}
+            </div>
         </main>
 
         <footer class="chinese-footer">
